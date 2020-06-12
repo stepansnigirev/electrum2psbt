@@ -30,3 +30,6 @@ b = f.read()
 print("Unparsed:", len(b))
 print(b.hex())
 assert etx.serialize() == bytes.fromhex(tx1)
+
+psbt = etx.to_psbt()
+print(psbt.serialize())

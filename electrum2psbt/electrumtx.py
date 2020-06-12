@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+### Currently only for segwit single-key transactions
 from .psbt import CTransaction, CTxIn, CTxOut, CTxInWitness
 from .psbt import deser_vector, ser_vector
+from .psbt import PSBT, PartiallySignedInput
 import struct
 from . import base58
 
@@ -30,6 +32,12 @@ class ElectrumInputMeta:
         for der in self.derivation:
             r += der.to_bytes(2, 'little')
         return r
+
+    def to_psbt(self):
+        inp = PartiallySignedInput()
+        # TODO: detect script type and fill witness utxo
+        # Requires xpub derivation... sucks...
+        return inp
 
     def __repr__(self):
         return "ElectrumInputMeta(nValue=%d, xpub=%s, derivation=%s)" \
@@ -77,6 +85,12 @@ class ElectrumTx(CTransaction):
         r += struct.pack("<I", self.nLockTime)
         return r
 
+    def to_psbt(self):
+        psbt = PSBT(CTransaction(self))
+        psbt.inputs = [inp.to_psbt() for inp in self.inputsMeta]
+        # TODO: add outputs info
+        # maybe bruteforce?
+        return psbt
 
     def __repr__(self):
         return "ElectrumTx(nVersion=%i vin=%s vout=%s wit=%s nLockTime=%i meta=%s)" \
